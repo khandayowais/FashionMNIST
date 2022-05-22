@@ -1,0 +1,63 @@
+import gzip
+import numpy as np
+from math import floor
+import torch
+
+class_one = [5, 7 ,9] # shoe classes
+IMAGE_SIZE = 28 
+CHANNEL = 1
+
+
+def convert_to_binary(labels):
+    '''
+    Args:
+        labels: labels of size N having 10 classes
+    return
+        labels: labels of size N having 2 classes
+    '''
+    binary_labels = labels.copy()
+    for index in range(len(labels)):
+        if labels[index] in class_one:
+            binary_labels[index] = 1
+        else:
+            binary_labels[index] = 0
+        
+    return binary_labels
+
+def load_mnist(path, kind='train'):
+    
+    '''
+    Args: 
+        path: specify the path of the data
+        kind: train or test
+    return:
+        images, labels 
+    '''
+    labels_path = path + kind + '-labels-idx1-ubyte.gz'
+    images_path = path + kind + '-images-idx3-ubyte.gz'
+
+    with gzip.open(labels_path, 'rb') as lbpath:
+        labels = np.frombuffer(lbpath.read(), dtype=np.uint8,
+                               offset=8)
+        
+        binary_labels = convert_to_binary(labels)
+        
+    with gzip.open(images_path, 'rb') as imgpath:
+        images = np.frombuffer(imgpath.read(), dtype=np.uint8,
+                               offset=16).reshape(len(labels),784)
+        images = np.asarray(images).reshape(-1,IMAGE_SIZE,IMAGE_SIZE,CHANNEL).astype('float32')
+        
+        
+    
+    return images, binary_labels
+
+def output_label(label):
+    '''
+    Args:
+        label: integer value of label
+    return:
+        label: label class name
+    '''
+    output_mapping = {0: 'No-Shoe', 1: 'Shoe'}
+    input = (label.item() if type(label) == torch.Tensor else label)
+    return output_mapping[input]
